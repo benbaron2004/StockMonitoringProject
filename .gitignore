@@ -1,0 +1,23 @@
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+backend/*.egg-info/
+
+# Claude Code local settings
+.claude/
+
+# Env / secrets
+.env
+backend/.env
+
+# Data
+backend/data/*.db
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# OS
+.DS_Store

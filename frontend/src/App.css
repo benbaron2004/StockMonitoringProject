@@ -1,0 +1,162 @@
+.app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+  font-family: system-ui, sans-serif;
+}
+
+h1 {
+  font-size: 1.4rem;
+  margin-bottom: 1.5rem;
+}
+
+.banner {
+  padding: 0.6rem 0.8rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.banner-error {
+  background: #fdecea;
+  color: #b3261e;
+  border: 1px solid #f5c2c0;
+}
+
+.ticker-selector {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.ticker-selector label,
+.threshold-input {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.85rem;
+  color: #444;
+  flex: 1;
+}
+
+select,
+input[type='number'] {
+  padding: 0.5rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.threshold-input {
+  margin-bottom: 1rem;
+}
+
+.field-error {
+  color: #b3261e;
+  font-size: 0.8rem;
+  margin: 0.2rem 0 0;
+}
+
+.start-button,
+.stop-button {
+  width: 100%;
+  padding: 0.7rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+}
+
+.start-button {
+  background: #1a7f37;
+  color: white;
+}
+
+.start-button:disabled {
+  background: #a8d5b5;
+  cursor: not-allowed;
+}
+
+.stop-button {
+  background: #b3261e;
+  color: white;
+}
+
+.stop-button:disabled {
+  background: #e3a9a5;
+  cursor: not-allowed;
+}
+
+.live-status {
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 1.2rem;
+}
+
+.market-banner {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.stock-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.stock-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.1rem;
+}
+
+.stock-row .ticker {
+  font-weight: 600;
+}
+
+.spread {
+  font-size: 1.3rem;
+  font-weight: 700;
+  padding: 0.6rem;
+  border-radius: 6px;
+  background: #f5f5f5;
+  margin-bottom: 0.8rem;
+}
+
+.spread-over {
+  background: #fff4e0;
+  color: #a15c00;
+}
+
+.threshold-note {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: #888;
+}
+
+.alert-badge {
+  display: inline-block;
+  background: #fdecea;
+  color: #b3261e;
+  padding: 0.4rem 0.7rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin-bottom: 0.8rem;
+}
+
+.poll-error-banner {
+  font-size: 0.8rem;
+  color: #a15c00;
+  background: #fff4e0;
+  padding: 0.5rem;
+  border-radius: 6px;
+  margin-bottom: 0.8rem;
+}
+
+.meta-row {
+  font-size: 0.75rem;
+  color: #999;
+}
