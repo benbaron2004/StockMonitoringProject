@@ -1,3 +1,4 @@
+import { StockCombobox } from './StockCombobox'
 import type { TickerPreset } from '../types'
 
 interface Props {
@@ -12,28 +13,10 @@ interface Props {
 export function TickerSelector({ tickers, tickerA, tickerB, onChangeA, onChangeB, disabled }: Props) {
   return (
     <div className="ticker-selector">
-      <label>
-        Stock A
-        <select value={tickerA} onChange={(e) => onChangeA(e.target.value)} disabled={disabled}>
-          <option value="">Select a stock…</option>
-          {tickers.map((t) => (
-            <option key={t.symbol} value={t.symbol}>
-              {t.name} ({t.symbol})
-            </option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Stock B
-        <select value={tickerB} onChange={(e) => onChangeB(e.target.value)} disabled={disabled}>
-          <option value="">Select a stock…</option>
-          {tickers.map((t) => (
-            <option key={t.symbol} value={t.symbol}>
-              {t.name} ({t.symbol})
-            </option>
-          ))}
-        </select>
-      </label>
+      <div className="ticker-selector-row">
+        <StockCombobox tickers={tickers} value={tickerA} onChange={onChangeA} disabled={disabled} label="Stock A" />
+        <StockCombobox tickers={tickers} value={tickerB} onChange={onChangeB} disabled={disabled} label="Stock B" />
+      </div>
       {tickerA && tickerB && tickerA === tickerB && (
         <p className="field-error">Stock A and Stock B must be different.</p>
       )}
