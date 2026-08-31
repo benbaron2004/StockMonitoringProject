@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
-import { fetchStatus } from '../api/client'
-import type { SessionStatusResponse } from '../types'
+import { fetchSessions } from '../api/client'
+import type { Session } from '../types'
 
 const POLL_MS = 4000
 
-export function useSessionPolling() {
-  const [status, setStatus] = useState<SessionStatusResponse | null>(null)
+export function useSessionsPolling() {
+  const [sessions, setSessions] = useState<Session[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   async function refresh() {
     try {
-      const data = await fetchStatus()
-      setStatus(data)
+      const data = await fetchSessions()
+      setSessions(data)
       setError(null)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'failed to reach the backend')
@@ -27,5 +27,5 @@ export function useSessionPolling() {
     }
   }, [])
 
-  return { status, error, refresh }
+  return { sessions, error, refresh }
 }

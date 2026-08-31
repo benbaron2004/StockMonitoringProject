@@ -1,6 +1,7 @@
-export type SessionStatus = 'idle' | 'active' | 'stopped'
+export type SessionStatus = 'active' | 'stopped'
 
-export interface SessionStatusResponse {
+export interface Session {
+  id: string
   status: SessionStatus
   ticker_a: string | null
   ticker_b: string | null

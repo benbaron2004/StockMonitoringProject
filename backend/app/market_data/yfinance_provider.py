@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from datetime import UTC, datetime
 
 import yfinance as yf
@@ -14,6 +15,18 @@ log = logging.getLogger(__name__)
 # good price in a single poll tick -- cheap protection against a scraping
 # glitch (e.g. a stale/garbled value from Yahoo) rather than a real move.
 MAX_TICK_JUMP_FRACTION = 0.20
+
+# yfinance is an unofficial, occasionally-flaky scraper -- a single failed
+# fetch is often just a transient blip, not a real outage. Retry a couple of
+# times with a short delay before giving up.
+MAX_FETCH_ATTEMPTS = 3
+RETRY_DELAY_SECONDS = 0.75
+
+# Yahoo Finance reports TASE-listed instruments in agorot (1/100 ILS), e.g.
+# Teva shows as ~10940 rather than ~109.40. Normalize to ILS here, at the
+# data-source boundary, so nothing downstream (poller, session %-change math,
+# price display) needs to know or care about the source's raw unit.
+AGOROT_PER_ILS = 100
 
 
 class YFinanceProvider:
@@ -29,10 +42,29 @@ class YFinanceProvider:
         self._last_good_price: dict[str, float] = {}
 
     def get_price(self, ticker: str) -> PriceQuote:
-        price = self._fetch_price(ticker)
+        price = self._fetch_price_with_retry(ticker) / AGOROT_PER_ILS
         self._check_outlier(ticker, price)
         self._last_good_price[ticker] = price
         return PriceQuote(ticker=ticker, price=price, as_of=datetime.now(UTC))
+
+    def _fetch_price_with_retry(self, ticker: str) -> float:
+        last_error: MarketDataUnavailable | None = None
+        for attempt in range(1, MAX_FETCH_ATTEMPTS + 1):
+            try:
+                return self._fetch_price(ticker)
+            except MarketDataUnavailable as exc:
+                last_error = exc
+                if attempt < MAX_FETCH_ATTEMPTS:
+                    log.warning(
+                        "price fetch attempt %d/%d failed for %s, retrying: %s",
+                        attempt,
+                        MAX_FETCH_ATTEMPTS,
+                        ticker,
+                        exc,
+                    )
+                    time.sleep(RETRY_DELAY_SECONDS)
+        assert last_error is not None
+        raise last_error
 
     def _fetch_price(self, ticker: str) -> float:
         t = yf.Ticker(ticker)

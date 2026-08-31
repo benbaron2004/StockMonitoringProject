@@ -6,8 +6,8 @@ from pathlib import Path
 from app.config import settings
 
 _SCHEMA = """
-CREATE TABLE IF NOT EXISTS current_session (
-    id INTEGER PRIMARY KEY CHECK (id = 1),
+CREATE TABLE IF NOT EXISTS sessions (
+    id TEXT PRIMARY KEY,
     status TEXT NOT NULL,
     ticker_a TEXT,
     ticker_b TEXT,

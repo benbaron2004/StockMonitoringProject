@@ -1,54 +1,53 @@
 import { useEffect, useState } from 'react'
 import './App.css'
-import { fetchTickers, startSession, stopSession } from './api/client'
-import { LiveStatus } from './components/LiveStatus'
-import { SessionControls } from './components/SessionControls'
-import { ThresholdInput } from './components/ThresholdInput'
-import { TickerSelector } from './components/TickerSelector'
-import { useSessionPolling } from './hooks/useSessionPolling'
+import { fetchTickers, removeSession, stopSession } from './api/client'
+import { AddMonitorForm } from './components/AddMonitorForm'
+import { MonitorCard } from './components/MonitorCard'
+import { useSessionsPolling } from './hooks/useSessionsPolling'
 import type { TickerPreset } from './types'
 
-const DEFAULT_THRESHOLD = 2.0
-
 function App() {
-  const { status, error, refresh } = useSessionPolling()
+  const { sessions, error, refresh } = useSessionsPolling()
   const [tickers, setTickers] = useState<TickerPreset[]>([])
-  const [tickerA, setTickerA] = useState('')
-  const [tickerB, setTickerB] = useState('')
-  const [threshold, setThreshold] = useState(DEFAULT_THRESHOLD)
-  const [busy, setBusy] = useState(false)
+  const [busyIds, setBusyIds] = useState<Set<string>>(new Set())
   const [actionError, setActionError] = useState<string | null>(null)
 
   useEffect(() => {
     fetchTickers().then(setTickers).catch(() => setActionError('Could not load the stock list.'))
   }, [])
 
-  const isActive = status?.status === 'active'
-  const canStart = Boolean(tickerA && tickerB && tickerA !== tickerB && threshold > 0)
-
-  async function handleStart() {
-    setBusy(true)
-    setActionError(null)
-    try {
-      await startSession(tickerA, tickerB, threshold)
-      await refresh()
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : 'failed to start monitoring')
-    } finally {
-      setBusy(false)
-    }
+  function setBusy(id: string, busy: boolean) {
+    setBusyIds((prev) => {
+      const next = new Set(prev)
+      if (busy) next.add(id)
+      else next.delete(id)
+      return next
+    })
   }
 
-  async function handleStop() {
-    setBusy(true)
+  async function handleStop(id: string) {
+    setBusy(id, true)
     setActionError(null)
     try {
-      await stopSession()
+      await stopSession(id)
       await refresh()
     } catch (err) {
       setActionError(err instanceof Error ? err.message : 'failed to stop monitoring')
     } finally {
-      setBusy(false)
+      setBusy(id, false)
+    }
+  }
+
+  async function handleRemove(id: string) {
+    setBusy(id, true)
+    setActionError(null)
+    try {
+      await removeSession(id)
+      await refresh()
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : 'failed to remove monitor')
+    } finally {
+      setBusy(id, false)
     }
   }
 
@@ -59,20 +58,22 @@ function App() {
       {error && <div className="banner banner-error">Can't reach the backend: {error}</div>}
       {actionError && <div className="banner banner-error">{actionError}</div>}
 
-      <TickerSelector
-        tickers={tickers}
-        tickerA={tickerA}
-        tickerB={tickerB}
-        onChangeA={setTickerA}
-        onChangeB={setTickerB}
-        disabled={isActive}
-      />
+      <AddMonitorForm tickers={tickers} onStarted={refresh} />
 
-      <ThresholdInput value={threshold} onChange={setThreshold} disabled={isActive} />
-
-      <SessionControls canStart={canStart} isActive={isActive} isBusy={busy} onStart={handleStart} onStop={handleStop} />
-
-      {status && status.status !== 'idle' && <LiveStatus status={status} />}
+      <div className="monitor-list">
+        {sessions && sessions.length === 0 && (
+          <p className="empty-state">No stocks being monitored yet — add a pair above to get started.</p>
+        )}
+        {sessions?.map((session) => (
+          <MonitorCard
+            key={session.id}
+            session={session}
+            isBusy={busyIds.has(session.id)}
+            onStop={handleStop}
+            onRemove={handleRemove}
+          />
+        ))}
+      </div>
     </div>
   )
 }

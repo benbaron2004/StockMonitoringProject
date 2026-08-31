@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import uuid
 from datetime import UTC, datetime
 from typing import Literal
 
@@ -10,7 +11,8 @@ from app.db import get_connection
 
 
 class SessionState(BaseModel):
-    status: Literal["idle", "active", "stopped"] = "idle"
+    id: str
+    status: Literal["active", "stopped"] = "active"
     ticker_a: str | None = None
     ticker_b: str | None = None
     baseline_price_a: float | None = None
@@ -28,6 +30,7 @@ class SessionState(BaseModel):
 
 def _row_to_state(row) -> SessionState:
     return SessionState(
+        id=row["id"],
         status=row["status"],
         ticker_a=row["ticker_a"],
         ticker_b=row["ticker_b"],
@@ -46,21 +49,23 @@ def _row_to_state(row) -> SessionState:
 
 
 class SessionStore:
-    """Single-session state: an in-memory singleton persisted to a one-row
-    SQLite table on every mutation, so an active session survives a backend
-    restart. Guarded by an asyncio.Lock shared between the API handlers and
-    the poller loop.
+    """Multiple concurrent named sessions, in-memory, each persisted to its
+    own row in SQLite on every mutation so active sessions survive a backend
+    restart. Guarded by a single asyncio.Lock shared between the API
+    handlers and the poller loop -- contention is negligible at this app's
+    scale (a handful of sessions, one user), so per-session locks would add
+    real complexity (lock-per-id creation/cleanup) for no measured benefit.
     """
 
     def __init__(self) -> None:
         self.lock = asyncio.Lock()
-        self._state = self._load()
+        self._sessions: dict[str, SessionState] = self._load_all()
 
-    def _load(self) -> SessionState:
+    def _load_all(self) -> dict[str, SessionState]:
         conn = get_connection()
         try:
-            row = conn.execute("SELECT * FROM current_session WHERE id = 1").fetchone()
-            return _row_to_state(row) if row else SessionState()
+            rows = conn.execute("SELECT * FROM sessions ORDER BY started_at ASC").fetchall()
+            return {row["id"]: _row_to_state(row) for row in rows}
         finally:
             conn.close()
 
@@ -69,13 +74,13 @@ class SessionStore:
         try:
             conn.execute(
                 """
-                INSERT INTO current_session (
+                INSERT INTO sessions (
                     id, status, ticker_a, ticker_b,
                     baseline_price_a, baseline_price_b,
                     current_price_a, current_price_b,
                     threshold_pct, alerted, alerted_at,
                     started_at, stopped_at, last_updated_at, last_poll_error
-                ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     status=excluded.status,
                     ticker_a=excluded.ticker_a,
@@ -93,6 +98,7 @@ class SessionStore:
                     last_poll_error=excluded.last_poll_error
                 """,
                 (
+                    state.id,
                     state.status,
                     state.ticker_a,
                     state.ticker_b,
@@ -113,15 +119,28 @@ class SessionStore:
         finally:
             conn.close()
 
-    def snapshot(self) -> SessionState:
-        return self._state.model_copy()
+    def _delete(self, session_id: str) -> None:
+        conn = get_connection()
+        try:
+            conn.execute("DELETE FROM sessions WHERE id = ?", (session_id,))
+            conn.commit()
+        finally:
+            conn.close()
 
-    async def start_session(self, ticker_a: str, ticker_b: str, threshold_pct: float, price_a: float, price_b: float) -> SessionState:
+    def snapshot(self, session_id: str) -> SessionState | None:
+        state = self._sessions.get(session_id)
+        return state.model_copy() if state else None
+
+    def list_all(self) -> list[SessionState]:
+        return [state.model_copy() for state in self._sessions.values()]
+
+    async def start_session(
+        self, ticker_a: str, ticker_b: str, threshold_pct: float, price_a: float, price_b: float
+    ) -> SessionState:
         async with self.lock:
-            if self._state.status == "active":
-                raise ValueError("a session is already active")
             now = datetime.now(UTC)
-            self._state = SessionState(
+            state = SessionState(
+                id=uuid.uuid4().hex,
                 status="active",
                 ticker_a=ticker_a,
                 ticker_b=ticker_b,
@@ -134,20 +153,35 @@ class SessionStore:
                 started_at=now,
                 last_updated_at=now,
             )
-            self._persist(self._state)
-            return self._state.model_copy()
+            self._sessions[state.id] = state
+            self._persist(state)
+            return state.model_copy()
 
-    async def stop_session(self) -> SessionState:
+    async def stop_session(self, session_id: str) -> SessionState:
         async with self.lock:
-            if self._state.status != "active":
-                raise ValueError("no active session")
-            self._state.status = "stopped"
-            self._state.stopped_at = datetime.now(UTC)
-            self._persist(self._state)
-            return self._state.model_copy()
+            state = self._sessions.get(session_id)
+            if state is None:
+                raise KeyError(session_id)
+            if state.status != "active":
+                raise ValueError("session is not active")
+            state.status = "stopped"
+            state.stopped_at = datetime.now(UTC)
+            self._persist(state)
+            return state.model_copy()
+
+    async def remove_session(self, session_id: str) -> None:
+        async with self.lock:
+            state = self._sessions.get(session_id)
+            if state is None:
+                raise KeyError(session_id)
+            if state.status == "active":
+                raise ValueError("stop the session before removing it")
+            del self._sessions[session_id]
+            self._delete(session_id)
 
     async def apply_poll_update(
         self,
+        session_id: str,
         *,
         price_a: float | None = None,
         price_b: float | None = None,
@@ -156,15 +190,16 @@ class SessionStore:
         last_poll_error: str | None = None,
     ) -> None:
         async with self.lock:
-            if self._state.status != "active":
+            state = self._sessions.get(session_id)
+            if state is None or state.status != "active":
                 return
             if price_a is not None:
-                self._state.current_price_a = price_a
+                state.current_price_a = price_a
             if price_b is not None:
-                self._state.current_price_b = price_b
+                state.current_price_b = price_b
             if alerted is not None:
-                self._state.alerted = alerted
-                self._state.alerted_at = alerted_at
-            self._state.last_poll_error = last_poll_error
-            self._state.last_updated_at = datetime.now(UTC)
-            self._persist(self._state)
+                state.alerted = alerted
+                state.alerted_at = alerted_at
+            state.last_poll_error = last_poll_error
+            state.last_updated_at = datetime.now(UTC)
+            self._persist(state)

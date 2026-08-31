@@ -1,5 +1,5 @@
 .app {
-  max-width: 480px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 2rem 1.5rem 3rem;
   font-family: system-ui, sans-serif;
@@ -179,10 +179,50 @@ input[type='number'] {
   cursor: not-allowed;
 }
 
-.live-status {
+.remove-button {
+  width: 100%;
+  padding: 0.7rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background: white;
+  color: #444;
+  cursor: pointer;
+}
+
+.remove-button:disabled {
+  color: #aaa;
+  cursor: not-allowed;
+}
+
+.add-monitor-form {
+  max-width: 480px;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.monitor-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.2rem;
+}
+
+.empty-state {
+  color: #888;
+  font-size: 0.9rem;
+}
+
+.monitor-card {
   border: 1px solid #e0e0e0;
   border-radius: 10px;
   padding: 1.2rem;
+}
+
+.monitor-card-header {
+  font-weight: 700;
+  font-size: 1rem;
+  margin-bottom: 0.6rem;
 }
 
 .market-banner {
@@ -200,12 +240,23 @@ input[type='number'] {
 
 .stock-row {
   display: flex;
-  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6rem;
   font-size: 1.1rem;
 }
 
 .stock-row .ticker {
   font-weight: 600;
+  flex: 1;
+}
+
+.stock-row .price {
+  color: #444;
+}
+
+.stock-row .pct {
+  min-width: 4.5rem;
+  text-align: right;
 }
 
 .spread {

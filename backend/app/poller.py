@@ -8,6 +8,7 @@ from app.alerts.email import send_alert_email
 from app.config import settings
 from app.deps import market_data_provider, session_store
 from app.market_data.exceptions import MarketDataUnavailable
+from app.session import SessionState
 from app.trading_calendar.tase_calendar import is_tase_trading_now
 
 log = logging.getLogger(__name__)
@@ -28,18 +29,30 @@ async def poller_loop() -> None:
 
 
 async def _poll_once() -> None:
-    state = session_store.snapshot()
-    if state.status != "active":
-        return
     if not is_tase_trading_now(datetime.now(UTC)):
         return
 
+    for state in session_store.list_all():
+        if state.status != "active":
+            continue
+        try:
+            await _poll_one_session(state)
+        except Exception:
+            log.exception(
+                "poll tick failed for session %s (%s/%s), continuing with other sessions",
+                state.id,
+                state.ticker_a,
+                state.ticker_b,
+            )
+
+
+async def _poll_one_session(state: SessionState) -> None:
     try:
         quote_a = await asyncio.to_thread(market_data_provider.get_price, state.ticker_a)
         quote_b = await asyncio.to_thread(market_data_provider.get_price, state.ticker_b)
     except MarketDataUnavailable as exc:
-        log.warning("poll tick skipped: %s", exc)
-        await session_store.apply_poll_update(last_poll_error=str(exc))
+        log.warning("poll tick skipped for session %s: %s", state.id, exc)
+        await session_store.apply_poll_update(state.id, last_poll_error=str(exc))
         return
 
     pct_a = (quote_a.price - state.baseline_price_a) / state.baseline_price_a * 100
@@ -53,12 +66,13 @@ async def _poll_once() -> None:
             await asyncio.to_thread(send_alert_email, state, pct_a, pct_b, spread)
             alerted = True
             alerted_at = datetime.now(UTC)
-            log.info("alert sent: %s vs %s spread=%.2f%%", state.ticker_a, state.ticker_b, spread)
+            log.info("alert sent for session %s: %s vs %s spread=%.2f%%", state.id, state.ticker_a, state.ticker_b, spread)
         except Exception:
             # Not marked alerted -> retried automatically on the next tick.
-            log.exception("alert email failed, will retry next tick")
+            log.exception("alert email failed for session %s, will retry next tick", state.id)
 
     await session_store.apply_poll_update(
+        state.id,
         price_a=quote_a.price,
         price_b=quote_b.price,
         alerted=alerted,

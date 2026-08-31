@@ -20,8 +20,9 @@ class StartSessionRequest(BaseModel):
         return self
 
 
-class SessionStatusResponse(BaseModel):
-    status: Literal["idle", "active", "stopped"]
+class SessionResponse(BaseModel):
+    id: str
+    status: Literal["active", "stopped"]
     ticker_a: str | None = None
     ticker_b: str | None = None
     baseline_price_a: float | None = None

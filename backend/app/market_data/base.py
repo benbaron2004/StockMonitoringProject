@@ -6,7 +6,7 @@ from typing import NamedTuple, Protocol
 
 class PriceQuote(NamedTuple):
     ticker: str
-    price: float
+    price: float  # always in ILS (shekels), regardless of what unit the underlying source reports in
     as_of: datetime
 
 
