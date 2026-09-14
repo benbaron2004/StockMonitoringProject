@@ -1,0 +1,111 @@
+TASE Spread Monitor - Windows Setup
+====================================
+
+This is a one-time setup. After this, running the app is just one
+double-click.
+
+
+STEP 1 - Unzip the folder
+--------------------------
+Right-click the zip file you were given and choose "Extract All...".
+Pick a location and open the folder it creates.
+
+Make sure "Start-TASE-Monitor.bat" is directly inside that folder,
+next to two other folders named "backend" and "frontend" - not
+buried one level deeper inside another folder of the same name.
+
+Put the folder somewhere simple, for example directly on the Desktop,
+or at C:\TASE-Monitor. Avoid very long folder paths.
+
+If your Desktop is set up to sync with OneDrive, it's better to use
+a location OUTSIDE OneDrive (like C:\TASE-Monitor) instead - OneDrive
+can slow things down or get confused trying to sync files this app
+creates while running.
+
+
+STEP 2 - Install Python
+-------------------------
+This app needs Python to run. If you're not sure whether you already
+have it, don't worry - just follow these steps anyway, it's safe to
+run the installer again.
+
+1. Go to: https://www.python.org/downloads/
+2. Click the big "Download Python" button (get a recent version like
+   3.12 or 3.13 - not a "pre-release" or "release candidate" version).
+3. Run the downloaded installer.
+4. IMPORTANT: on the very first screen, there is a checkbox at the
+   bottom that says "Add python.exe to PATH" (or similar). Make sure
+   it is CHECKED before clicking "Install Now".
+5. Let it finish installing.
+
+Then RESTART YOUR COMPUTER once. This makes sure Windows fully
+recognizes the new Python installation before you use it.
+
+
+STEP 3 - Add the email settings file
+--------------------------------------
+Ben will give you a small file named ".env". Copy it into the
+"backend" folder, so it sits at:
+
+    <the folder from Step 1>\backend\.env
+
+The filename must be exactly ".env" - if it looks like it's named
+".env.txt" instead, that's just Windows hiding the real file
+extension. You can check this in File Explorer: click the "View" tab
+at the top, and make sure "File name extensions" is turned on - then
+you'll be able to see (and fix, if needed) the true file name.
+
+
+STEP 4 - Run it
+-----------------
+Double-click "Start-TASE-Monitor.bat".
+
+A black window will open. The FIRST time you run it, a few things
+may happen that are normal and expected:
+
+  * Windows may show a blue "Windows protected your PC" warning.
+    This happens because the file came from outside the Windows
+    Store, not because anything is wrong. Click "More info", then
+    click "Run anyway".
+
+  * Windows Firewall may ask for permission for "python.exe" to
+    communicate. Click "Allow access".
+
+  * The first run will take a minute or two longer than usual while
+    it sets itself up. This needs an internet connection. You'll see
+    text scrolling in the black window - that's normal, just wait
+    for it to finish.
+
+After that first-time setup, your web browser should open on its own
+to the app. Every time after this, it will be much faster - just a
+few seconds.
+
+
+TO STOP THE APP
+-----------------
+Simply close the black window. That's it - that's the intended way
+to stop it. Closing it does not break anything; just double-click
+the launcher again next time you want to use it.
+
+
+TROUBLESHOOTING
+-----------------
+"A working Python was not found"
+    Python isn't installed, or wasn't added to PATH. Go back to
+    Step 2, and make sure the "Add python.exe to PATH" box is
+    checked during install. Restart the computer afterward.
+
+"Missing configuration file: backend\.env"
+    The .env file from Step 3 isn't in the right place, or is
+    misnamed. Double check it's at backend\.env exactly (see Step 3
+    for how to check the real filename).
+
+The browser never opened by itself
+    The black window is still the running app - it just didn't open
+    a browser automatically. Open any browser yourself and go to:
+        http://127.0.0.1:8099
+
+Something looks broken after Ben changes the app later
+    Delete the "backend\.venv" folder (just that one folder), then
+    double-click the launcher again - it will rebuild everything
+    from scratch.
