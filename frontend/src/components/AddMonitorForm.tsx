@@ -4,7 +4,7 @@ import type { TickerPreset } from '../types'
 import { ThresholdInput } from './ThresholdInput'
 import { TickerSelector } from './TickerSelector'
 
-const DEFAULT_THRESHOLD = 2.0
+const DEFAULT_THRESHOLD = 1.5
 
 interface Props {
   tickers: TickerPreset[]

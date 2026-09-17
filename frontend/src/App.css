@@ -10,6 +10,13 @@ h1 {
   margin-bottom: 1.5rem;
 }
 
+.section-heading {
+  font-size: 1.1rem;
+  margin: 2rem 0 1rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #e0e0e0;
+}
+
 .banner {
   padding: 0.6rem 0.8rem;
   border-radius: 6px;
@@ -30,6 +37,15 @@ h1 {
 .ticker-selector-row {
   display: flex;
   gap: 1rem;
+}
+
+/* When .threshold-input is reused as a flex child (e.g. the MA watch
+   form's short/long period fields) rather than its usual standalone full-
+   width usage, it needs the same flex-sizing .combobox already gets below
+   -- otherwise two side-by-side inputs won't evenly split the row. */
+.ticker-selector-row .threshold-input {
+  flex: 1;
+  min-width: 0;
 }
 
 .combobox {
@@ -301,4 +317,228 @@ input[type='number'] {
 .meta-row {
   font-size: 0.75rem;
   color: #999;
+}
+
+/* Moving-average chart */
+
+.ma-chart {
+  margin-top: 0.8rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.chart-range-selector {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.chart-range-button {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #ccc;
+  background: white;
+  color: #444;
+  cursor: pointer;
+}
+
+.chart-range-button:hover:not(:disabled) {
+  background: #f0f4f0;
+}
+
+.chart-range-button-active {
+  background: #1a7f37;
+  border-color: #1a7f37;
+  color: white;
+}
+
+.chart-range-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.ma-chart-wrap {
+  position: relative;
+}
+
+.ma-chart-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+  touch-action: none;
+}
+
+.chart-gridline {
+  stroke: #ececec;
+  stroke-width: 1;
+}
+
+.chart-axis-label {
+  fill: #999;
+  font-size: 9px;
+}
+
+.chart-line {
+  fill: none;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.chart-crosshair {
+  stroke: #bbb;
+  stroke-width: 1;
+}
+
+.chart-tooltip {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+  padding: 0.5rem 0.6rem;
+  font-size: 0.75rem;
+  color: #444;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 5;
+}
+
+.chart-tooltip-date {
+  font-weight: 600;
+  margin-bottom: 0.3rem;
+  color: #222;
+}
+
+.chart-tooltip-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.15rem;
+}
+
+.chart-tooltip-row strong {
+  margin-left: auto;
+  padding-left: 0.6rem;
+}
+
+.chart-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 3px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: #444;
+}
+
+.chart-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.ma-chart-clickable {
+  position: relative;
+  cursor: pointer;
+  border-radius: 8px;
+}
+
+.ma-chart-clickable:hover .ma-chart-expand-hint,
+.ma-chart-clickable:focus-visible .ma-chart-expand-hint {
+  opacity: 1;
+}
+
+.ma-chart-clickable:focus-visible {
+  outline: 2px solid #1a7f37;
+  outline-offset: 2px;
+}
+
+.ma-chart-expand-hint {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid #ccc;
+  border-radius: 999px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.7rem;
+  color: #444;
+  opacity: 0;
+  transition: opacity 150ms;
+  pointer-events: none;
+}
+
+.chart-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  z-index: 100;
+}
+
+.chart-modal {
+  background: white;
+  border-radius: 10px;
+  width: min(960px, 100%);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 1rem 1.2rem 1.2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.chart-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+}
+
+.chart-modal-title {
+  font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.chart-modal-close {
+  border: 1px solid #ccc;
+  background: white;
+  border-radius: 999px;
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.chart-modal-close:hover {
+  background: #f0f4f0;
+}
+
+@media (max-width: 640px) {
+  .chart-modal-backdrop {
+    padding: 0;
+  }
+
+  .chart-modal {
+    width: 100%;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
 }

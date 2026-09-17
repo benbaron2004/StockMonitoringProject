@@ -23,6 +23,22 @@ CREATE TABLE IF NOT EXISTS sessions (
     last_updated_at TEXT,
     last_poll_error TEXT
 );
+
+CREATE TABLE IF NOT EXISTS ma_watches (
+    id TEXT PRIMARY KEY,
+    status TEXT NOT NULL,
+    ticker TEXT NOT NULL,
+    short_period INTEGER NOT NULL,
+    long_period INTEGER NOT NULL,
+    last_cross_direction TEXT,
+    last_short_ma REAL,
+    last_long_ma REAL,
+    last_checked_date TEXT,
+    last_alerted_at TEXT,
+    created_at TEXT NOT NULL,
+    stopped_at TEXT,
+    last_check_error TEXT
+);
 """
 
 
@@ -30,6 +46,7 @@ def get_connection() -> sqlite3.Connection:
     Path(settings.db_path).parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(settings.db_path)
     conn.row_factory = sqlite3.Row
-    conn.execute(_SCHEMA)
+    # executescript, not execute -- _SCHEMA now holds more than one statement.
+    conn.executescript(_SCHEMA)
     conn.commit()
     return conn

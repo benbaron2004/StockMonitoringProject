@@ -26,3 +26,40 @@ export interface TickerPreset {
   symbol: string
   name: string
 }
+
+export type MAWatchStatus = 'active' | 'stopped'
+export type MARelationship = 'golden' | 'death' | null
+
+export interface MAWatch {
+  id: string
+  status: MAWatchStatus
+  ticker: string
+  short_period: number
+  long_period: number
+  last_short_ma: number | null
+  last_long_ma: number | null
+  relationship: MARelationship
+  last_checked_date: string | null
+  last_alerted_at: string | null
+  created_at: string
+  stopped_at: string | null
+  last_check_error: string | null
+  market_open: boolean
+}
+
+export type ChartRange = '1W' | '1M' | '3M' | '6M' | '1Y' | '5Y'
+
+export interface ChartPoint {
+  date: string
+  close: number
+  short_ma: number
+  long_ma: number
+}
+
+export interface MAChartData {
+  ticker: string
+  short_period: number
+  long_period: number
+  range: ChartRange
+  points: ChartPoint[]
+}

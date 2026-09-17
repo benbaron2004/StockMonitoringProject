@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, time
+from datetime import date, datetime, time
 from zoneinfo import ZoneInfo
 
 from app.trading_calendar.holidays import (
@@ -20,6 +20,20 @@ TASE_SESSION_WINDOWS: dict[int, tuple[time, time]] = {
     3: (time(9, 59), time(17, 14)),  # Thu
     4: (time(9, 59), time(13, 34)),  # Fri
 }
+
+
+def tase_close_time_for_date(d: date) -> time | None:
+    """The scheduled close time for `d` if it's a TASE trading day, else
+    None. Unlike is_tase_trading_now, this doesn't know "now" -- it only
+    answers "does this calendar date have a session, and when does it end".
+    """
+    if d in TASE_FULL_CLOSURE_DATES_2026:
+        return None
+    if d in TASE_SHORTENED_SESSIONS_2026:
+        return TASE_SHORTENED_SESSIONS_2026[d][1]
+    if d.weekday() not in TASE_TRADING_WEEKDAYS:
+        return None
+    return TASE_SESSION_WINDOWS[d.weekday()][1]
 
 
 def is_tase_trading_now(now_utc: datetime) -> bool:

@@ -1,7 +1,16 @@
 :root {
-  color-scheme: light dark;
+  /* This app has no dark theme -- every color in App.css (text grays,
+     card/button backgrounds) was hand-picked for a light surface only (see
+     CLAUDE.md / the dataviz palette notes). Leaving this as "light dark"
+     (the Vite scaffold default) let the browser paint its own dark-mode
+     canvas + default control colors whenever the OS is in dark mode, which
+     the rest of the CSS was never designed against -- that's what produced
+     the unintended dark appearance. Pinned to light until a real dark theme
+     is built. */
+  color-scheme: light;
 }
 
 body {
   margin: 0;
+  background: #ffffff;
 }

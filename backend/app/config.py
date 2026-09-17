@@ -154,6 +154,11 @@ class Settings(BaseSettings):
     poll_interval_seconds: int = 45
     default_threshold_pct: float = 2.0
 
+    # Moving-average watch feature -- separate cadence from the pair-spread
+    # poller above since MA checks only need to happen once per trading day.
+    ma_poll_interval_seconds: int = 900
+    ma_check_delay_minutes: int = 45
+
     db_path: str = "./data/app.db"
 
 
